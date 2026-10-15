@@ -1,0 +1,84 @@
+[appointment]
+province = "8"
+locale = "es"
+# 从 --list-options 获取；4010 = 按指纹，4036 = 领取 TIE。请明确选择。
+procedure = ""
+office = "99" # Cualquier oficina，巴塞罗那省任意地点，不仅是市区
+
+[browser]
+headless = true
+channel = "chromium" # 使用完整 Chromium 的新版无头模式
+normalize_headless_user_agent = true # 读取实际 UA，只将 HeadlessChrome/ 替换为 Chrome/
+timeout_ms = 45000
+result_timeout_seconds = 20
+# 诊断文件可能含个人信息，仅本地保存最近一次，默认关闭
+save_diagnostics = false
+# 对每轮最终业务页面比较，首次建基线，变化时保存独立截图并随邮件发送
+capture_changes = true
+
+[monitor]
+transport = "hybrid_http" # 浏览器建立 Cookie 后关闭；后续业务查询使用 HTTP
+interval_seconds = 600
+jitter_seconds = 0
+attempts = 3
+retry_base_seconds = 30
+retry_max_seconds = 300
+failure_interval_seconds = 900
+notification_cooldown_seconds = 1800
+health_alert_after = 3
+
+[http]
+timeout_ms = 30000
+capture_forms = true # 保存脱敏表单/API结构，供后续完善自动预约
+
+[identity]
+# 身份信息从 .env 读取，仅提交给官方预约网站
+document_type = "NIE"
+document_env = "CITA_DOCUMENT"
+name_env = "CITA_NAME"
+nationality_env = "CITA_NATIONALITY"
+
+[flow]
+# 当前仅实测至身份表单；后续必须用本人信息联调后才可启用长期监测。
+verified = false
+# 身份提交后的“申请预约”按钮；用 --inspect 手动核实。
+request_button_name = "Solicitar Cita"
+# 有的业务还需选办公室并点击下一步。通过以下 steps 配置，示例：
+# [[flow.steps]]
+# action = "select"
+# selector = "#idSede"
+# value = "14"
+# [[flow.steps]]
+# action = "click"
+# selector = "#btnSiguiente"
+
+[detection]
+# 仅在查询结果阶段判断，首页公告不参与判断。
+unavailable_texts = ["En este momento no hay citas disponibles", "Actualmente no hay citas disponibles"]
+# 必须通过实际结果页面或 --inspect 配置“可选择的日期/时间”元素。
+# 禁止使用 body、普通下一步按钮、业务/办公室下拉框等宽泛选择器。
+available_selectors = []
+blocked_texts = ["Access Denied", "Request Rejected", "Too Many Requests", "verifica que eres humano", "sesión ha caducado"]
+
+[notifications]
+email = false
+whatsapp = false
+# 需要人工处理/持续失败也通知；与有号提醒用不同标题
+health_alerts = true
+
+[smtp]
+host_env = "SMTP_HOST"
+port = 465
+security = "ssl" # ssl 或 starttls，不支持明文
+username_env = "SMTP_USERNAME"
+password_env = "SMTP_PASSWORD"
+sender_env = "SMTP_FROM"
+recipient_env = "NOTIFY_EMAIL"
+
+[whatsapp]
+# 使用 Twilio 已审批 WhatsApp 模板，模板变量 {{1}} 为通知内容。
+account_sid_env = "TWILIO_ACCOUNT_SID"
+auth_token_env = "TWILIO_AUTH_TOKEN"
+from_env = "TWILIO_WHATSAPP_FROM"
+to_env = "NOTIFY_WHATSAPP"
+content_sid_env = "TWILIO_CONTENT_SID"

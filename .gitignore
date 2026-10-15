@@ -1,0 +1,8 @@
+.venv/
+.browsers/
+__pycache__/
+*.pyc
+.env
+config.toml
+runtime/
+.DS_Store

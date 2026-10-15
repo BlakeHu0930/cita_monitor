@@ -1,0 +1,1 @@
+"""Barcelona CITA availability monitor."""
